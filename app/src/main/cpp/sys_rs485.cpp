@@ -44,8 +44,10 @@ int __sys_rs485::start(void) {
         m_tty = ::open(tty, O_RDWR | O_NOCTTY | O_NDELAY);
         if (m_tty < 0) {
             fprintf(stderr, "__sys_rs485::__sys_rs485 open %s error.\n", tty);
+            __android_log_print(ANDROID_LOG_INFO, "Test485", "TTY %s open error, return code %d", tty, m_tty);
         } else {
             this->setup(0, 3);
+            __android_log_print(ANDROID_LOG_INFO, "Test485", "TTY %s open success ", tty);
         }
 
         pthread_t pid;
