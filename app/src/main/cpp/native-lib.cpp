@@ -23,7 +23,9 @@ jint Java_com_dnake_demo485_MainActivity_stringFromJNI(
         }
         int len = sys_rs485.dtx(data, sz);
         __android_log_print(ANDROID_LOG_INFO, "Test485", "--> TX %02X ... (%d)", data[0], len);
-        sleep(5);
+
+        // sleep(5);
+        usleep(100000);
     }
     return 0;
 }

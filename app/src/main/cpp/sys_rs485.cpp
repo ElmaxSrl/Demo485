@@ -46,7 +46,7 @@ int __sys_rs485::start(void) {
             fprintf(stderr, "__sys_rs485::__sys_rs485 open %s error.\n", tty);
             __android_log_print(ANDROID_LOG_INFO, "Test485", "TTY %s open error, return code %d", tty, m_tty);
         } else {
-            this->setup(0, 3);
+            this->setup(0, 8);
             __android_log_print(ANDROID_LOG_INFO, "Test485", "TTY %s open success ", tty);
         }
 
@@ -86,13 +86,18 @@ void __sys_rs485::setup(int pb, int br) {
         return;
 
     struct termios opt;
+    struct termios2 opt2;
+
     bzero(&opt, sizeof(opt));
+    bzero(&opt2, sizeof(opt2));
+
     opt.c_cflag |= CLOCAL | CREAD;
     opt.c_cflag &= ~CSIZE;
     opt.c_cflag |= CS8;
     opt.c_cflag &= ~CSTOPB;
     opt.c_cc[VTIME] = 0;
     opt.c_cc[VMIN] = 0;
+
     switch (pb) {
         case 0: //无校验
             opt.c_cflag &= ~PARENB;
@@ -140,9 +145,33 @@ void __sys_rs485::setup(int pb, int br) {
             cfsetispeed(&opt, B115200);
             cfsetospeed(&opt, B115200);
             break;
+        case 8:
+            /* CUSTOM BAUD */
+            ioctl(m_tty, TCGETS2, &opt2);
+            opt2.c_cflag &= ~CBAUD;
+            opt2.c_cflag |= CBAUDEX;
+            opt2.c_ispeed = 9090;
+            opt2.c_ospeed = 9090;
+            /* do other miscellaneous setup options with the flags here */
+            ioctl(m_tty, TCSETS2, &opt2);
+            break;
+        case 9:
+            /* CUSTOM BAUD */
+            ioctl(m_tty, TCGETS2, &opt2);
+            opt2.c_cflag &= ~CBAUD;
+            opt2.c_cflag |= CBAUDEX;
+            opt2.c_ispeed = 125000;
+            opt2.c_ospeed = 125000;
+            /* do other miscellaneous setup options with the flags here */
+            ioctl(m_tty, TCSETS2, &opt2);
+            break;
     }
+
+
     tcflush(m_tty, TCIFLUSH);
-    tcsetattr(m_tty, TCSANOW, &opt);
+    if (br < 8)
+        tcsetattr(m_tty, TCSANOW, &opt);
+
     fcntl(m_tty, F_SETFL, 0);
 }
 
@@ -213,7 +242,7 @@ int __sys_rs485::dtx(uint8_t *data, int length) {
         }
         if (lsr & TIOCSER_TEMT) {
             //延时,等最后一字节发送完
-            usleep(2 * 1000);
+            // usleep(2 * 1000);
             break;
         }
     }
